@@ -37,6 +37,7 @@ const picksData: Record<string, Array<{ picker: string; pick: string }>> = {
   ],
   "401772826": [
     { picker: "@augustuscaesar", pick: "Seattle over Texans ML (1.54)" },
+    { picker: "@chikay", pick: "Seattle over Texans ML (1.54)" },
   ],
 };
 
@@ -66,17 +67,16 @@ export default function App() {
 
               return {
                 id: event.id,
-                homeTeam: homeTeam.team?.displayName || "Home",
-                awayTeam: awayTeam.team?.displayName || "Away",
+                homeTeam: homeTeam.team?.name || "Home",
+                awayTeam: awayTeam.team?.name || "Away",
                 homeTeamLogo: homeTeam.team?.logo || "",
                 awayTeamLogo: awayTeam.team?.logo || "",
                 status: competition.status?.type?.detail || "Scheduled",
                 startDate: event.date || new Date().toISOString(),
-                homeScore: homeTeam.score || "",
-                awayScore: awayTeam.score || "",
-                competitionName: competition.shortName || "NFL",
-                description:
-                  competition.status?.type?.description || "No description",
+                homeScore: homeTeam.score,
+                awayScore: awayTeam.score,
+                competitionName: event.name || "NFL Week 7",
+                description: competition.status?.type?.description || "",
               };
             } catch (e) {
               return null;
@@ -130,7 +130,7 @@ export default function App() {
               <CardHeader>
                 <div className="flex items-center justify-between">
                   <CardTitle className="text-lg sm:text-xl font-semibold">
-                    {game.awayTeam} @ {game.homeTeam}
+                    {game.competitionName}
                   </CardTitle>
                   <span className="text-xs font-semibold px-3 py-1 rounded-full bg-blue-100 dark:bg-background text-blue-900 dark:text-blue-100">
                     {game.description}
