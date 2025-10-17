@@ -15,6 +15,8 @@ interface Game {
   awayScore?: number;
   competitionName: string;
   description: string;
+  awayWinner?: boolean;
+  homeWinner?: boolean;
 }
 
 // Store picks/notes data (you can replace this with an API call or database)
@@ -30,6 +32,8 @@ const picksData: Record<string, Array<{ picker: string; pick: string }>> = {
   "401772860": [
     { picker: "@purp", pick: "Carolina over New York Jets ML (1.86)" },
     { picker: "@ghostbo4.eth", pick: "Carolina over New York Jets ML (1.86)" },
+    { picker: "@syskey", pick: "Carolina over New York Jets ML (1.86)" },
+    { picker: "@todemashi", pick: "Carolina over New York Jets ML (1.86)" },
   ],
   "401772756": [
     { picker: "@gilbster", pick: "Colts over Chargers ML (2.10)" },
@@ -38,6 +42,7 @@ const picksData: Record<string, Array<{ picker: string; pick: string }>> = {
   "401772826": [
     { picker: "@augustuscaesar", pick: "Seattle over Texans ML (1.54)" },
     { picker: "@chikay", pick: "Seattle over Texans ML (1.54)" },
+    { picker: "@degencummunist.eth", pick: "Seattle over Texans ML (1.54)" },
   ],
 };
 
@@ -60,8 +65,9 @@ export default function App() {
               const competition = event.competitions?.[0];
               if (!competition) return null;
 
-              const homeTeam = competition.competitors?.[1];
-              const awayTeam = competition.competitors?.[0];
+              const homeTeam = competition.competitors?.[0];
+              const awayTeam = competition.competitors?.[1];
+              console.log("Home Team:", homeTeam);
 
               if (!homeTeam || !awayTeam) return null;
 
@@ -77,6 +83,12 @@ export default function App() {
                 awayScore: awayTeam.score,
                 competitionName: event.name || "NFL Week 7",
                 description: competition.status?.type?.description || "",
+                awayWinner:
+                  competition.status?.type?.detail === "Final" &&
+                  awayTeam.winner,
+                homeWinner:
+                  competition.status?.type?.detail === "Final" &&
+                  homeTeam.winner,
               };
             } catch (e) {
               return null;
@@ -91,6 +103,7 @@ export default function App() {
           "401772860",
           "401772756",
           "401772826",
+          // "401772941",
         ];
         const filteredGames = formattedGames.filter((game) =>
           allowedIds.includes(game.id)
@@ -136,9 +149,6 @@ export default function App() {
                     {game.description}
                   </span>
                 </div>
-                {/* <p className="text-md text-muted-foreground">
-                  {getStatusDisplay(game.status)}
-                </p> */}
               </CardHeader>
 
               <CardContent className="flex flex-col gap-4">
@@ -151,7 +161,7 @@ export default function App() {
                       className="w-12 h-12 mb-2 object-contain"
                     />
                     <div className="font-bold text-lg text-center">
-                      {game.awayTeam}
+                      {game.awayTeam} {game.awayWinner ? "🏆" : ""}
                     </div>
                     <div className="text-2xl font-bold text-white dark:text-white mt-1">
                       {game.awayScore ?? "-"}
@@ -166,7 +176,7 @@ export default function App() {
                       className="w-12 h-12 mb-2 object-contain"
                     />
                     <div className="font-bold text-lg text-center">
-                      {game.homeTeam}
+                      {game.homeTeam} {game.homeWinner ? "🏆" : ""}
                     </div>
                     <div className="text-2xl font-bold text-white dark:text-white mt-1">
                       {game.homeScore ?? ""}
