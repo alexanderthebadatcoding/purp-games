@@ -21,32 +21,12 @@ interface Game {
 
 // Store picks/notes data (you can replace this with an API call or database)
 const picksData: Record<string, Array<{ picker: string; pick: string }>> = {
-  "401772635": [
-    { picker: "@swim", pick: "Jacksonville over LAR ML (2.38)" },
-    { picker: "@trizsamae", pick: "Jacksonville over LAR ML (2.38)" },
-    { picker: "@ariabella", pick: "Jacksonville over LAR ML (2.38)" },
-		{ picker: "@petcel", pick: "Jacksonville over LAR ML (2.38)" },
-  ],
-  "401772862": [
-    { picker: "@qt", pick: "Minnesota over Philadelphia ML (2.08)" },
-  ],
-  "401772860": [
-    { picker: "@purp", pick: "Carolina over New York Jets ML (1.86)" },
-    { picker: "@ghostbo4.eth", pick: "Carolina over New York Jets ML (1.86)" },
-    { picker: "@syskey", pick: "Carolina over New York Jets ML (1.86)" },
-    { picker: "@todemashi", pick: "Carolina over New York Jets ML (1.86)" },
-  ],
-  "401772756": [
-    { picker: "@gilbster", pick: "Colts over Chargers ML (2.10)" },
-    { picker: "@pgilb", pick: "Colts over Chargers ML (2.10)" },
-  ],
-  "401772826": [
-    { picker: "@augustuscaesar", pick: "Seattle over Texans ML (1.54)" },
-    { picker: "@chikay", pick: "Seattle over Texans ML (1.54)" },
-    { picker: "@degencummunist.eth", pick: "Seattle over Texans ML (1.54)" },
-    { picker: "@garrett", pick: "Seattle over Texans ML (1.54)" },
-		{ picker: "@matthew.eth", pick: "Seattle over Texans ML (1.54)" },
-  ],
+  "401756924": [{ picker: "+143", pick: "BYU ML" }],
+  "401752742": [{ picker: "-188", pick: "Ole Miss +12.5" }],
+  "401756923": [{ picker: "-263", pick: "Texas Tech ML" }],
+  "401752745": [{ picker: "-156", pick: "Vandy +2.5" }],
+  "401754566": [{ picker: "+133", pick: "GT ML" }],
+  "401760393": [{ picker: "-142", pick: "UNLV +14.5" }],
 };
 
 export default function App() {
@@ -58,22 +38,18 @@ export default function App() {
     const fetchGames = async () => {
       try {
         const res = await fetch(
-          "https://site.api.espn.com/apis/site/v2/sports/football/nfl/scoreboard"
+          "https://site.api.espn.com/apis/site/v2/sports/football/college-football/scoreboard"
         );
         const data = await res.json();
-
         const formattedGames: Game[] = (data.events || [])
           .map((event: any) => {
             try {
               const competition = event.competitions?.[0];
               if (!competition) return null;
-
               const homeTeam = competition.competitors?.[0];
               const awayTeam = competition.competitors?.[1];
               console.log("Home Team:", homeTeam);
-
               if (!homeTeam || !awayTeam) return null;
-
               return {
                 id: event.id,
                 homeTeam: homeTeam.team?.name || "Home",
@@ -84,8 +60,8 @@ export default function App() {
                 startDate: event.date || new Date().toISOString(),
                 homeScore: homeTeam.score,
                 awayScore: awayTeam.score,
-                competitionName: event.name || "NFL Week 7",
-                description: competition.status?.type?.description || "",
+                competitionName: event.name || "College Football",
+                description: competition.status?.type?.shortDetail || "",
                 awayWinner:
                   competition.status?.type?.detail === "Final" &&
                   awayTeam.winner,
@@ -99,33 +75,98 @@ export default function App() {
           })
           .filter(Boolean) as Game[];
 
-        // setGames(formattedGames);
         const allowedIds = [
-          "401772635",
-          "401772862",
-          "401772860",
-          "401772756",
-          "401772826",
-          // "401772941",
+          "401756924",
+          "401752742",
+          "401756923",
+          "401752745",
+          "401754566",
+          "401760393",
         ];
-        const filteredGames = formattedGames.filter((game) =>
-          allowedIds.includes(game.id)
-        );
-        setGames(filteredGames);
+
+        let gamesToDisplay: Game[] = [];
+
+        if (allowedIds && allowedIds.length > 0) {
+          // Filter games by allowed IDs
+          const filteredGames = formattedGames.filter((game) =>
+            allowedIds.includes(game.id)
+          );
+
+          // For allowed IDs not in the scoreboard, fetch individual game data
+          const missingIds = allowedIds.filter(
+            (id) => !filteredGames.some((game) => game.id === id)
+          );
+
+          if (missingIds.length > 0) {
+            const fetchedGames = await Promise.all(
+              missingIds.map(async (id) => {
+                try {
+                  const summaryRes = await fetch(
+                    `https://site.api.espn.com/apis/site/v2/sports/football/college-football/summary?event=${id}`
+                  );
+                  const summaryData = await summaryRes.json();
+                  const header = summaryData.header;
+
+                  if (!header) return null;
+
+                  const competition = header.competitions?.[0];
+                  if (!competition) return null;
+                  const homeTeam = competition.competitors?.[0];
+                  const awayTeam = competition.competitors?.[1];
+
+                  if (!homeTeam || !awayTeam) return null;
+
+                  return {
+                    id: header.id,
+                    homeTeam: homeTeam.team?.name || "Home",
+                    awayTeam: awayTeam.team?.name || "Away",
+                    homeTeamLogo: homeTeam.team?.logos?.[0]?.href || "",
+                    awayTeamLogo: awayTeam.team?.logos?.[0]?.href || "",
+                    status: competition.status?.type?.detail || "Scheduled",
+                    startDate: competition.date || new Date().toISOString(),
+                    homeScore: homeTeam.score,
+                    awayScore: awayTeam.score,
+                    competitionName: `${homeTeam.team?.name} vs ${awayTeam.team?.name}`,
+                    description: competition.status?.type?.shortDetail || "",
+                    awayWinner:
+                      competition.status?.type?.detail === "Final" &&
+                      awayTeam.winner,
+                    homeWinner:
+                      competition.status?.type?.detail === "Final" &&
+                      homeTeam.winner,
+                  };
+                } catch (e) {
+                  console.error(`Failed to fetch game ${id}:`, e);
+                  return null;
+                }
+              })
+            );
+
+            gamesToDisplay = [
+              ...filteredGames,
+              ...fetchedGames.filter(Boolean),
+            ] as Game[];
+          } else {
+            gamesToDisplay = filteredGames;
+          }
+        } else {
+          // No allowed IDs, display all games
+          gamesToDisplay = formattedGames;
+        }
+
+        setGames(gamesToDisplay);
       } catch (err: any) {
         setError(err.message || "Failed to load games");
       } finally {
         setLoading(false);
       }
     };
-
     fetchGames();
   }, []);
-
   return (
     <div className="min-h-screen dark:bg-background text-foreground p-4 sm:p-6">
       <h1 className="text-2xl sm:text-3xl font-bold mb-4 text-center text-blue-900 dark:text-blue-100">
-        🏈 The Purp Games 💸
+        🏈 Gilbs Picks 💸
       </h1>
 
       {loading && (
@@ -204,8 +245,8 @@ export default function App() {
                     return Object.entries(grouped).map(
                       ([pickName, pickers]) => (
                         <div key={pickName} className="text-md text-white mb-1">
-                          <span className="font-semibold">{pickName}</span>{" "}
-                          picked by{" "}
+                          <span className="font-semibold">{pickName}</span> odds
+                          at{" "}
                           <span className="font-semibold">
                             {pickers.join(", ")}
                           </span>{" "}
