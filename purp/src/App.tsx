@@ -25,7 +25,7 @@ const picksData: Record<string, Array<{ picker: string; pick: string }>> = {
     { picker: "@swim", pick: "Jacksonville over LAR ML (2.38)" },
     { picker: "@trizsamae", pick: "Jacksonville over LAR ML (2.38)" },
     { picker: "@ariabella", pick: "Jacksonville over LAR ML (2.38)" },
-		{ picker: "@petcel", pick: "Jacksonville over LAR ML (2.38)" },
+    { picker: "@petcel", pick: "Jacksonville over LAR ML (2.38)" },
   ],
   "401772862": [
     { picker: "@qt", pick: "Minnesota over Philadelphia ML (2.08)" },
@@ -45,7 +45,7 @@ const picksData: Record<string, Array<{ picker: string; pick: string }>> = {
     { picker: "@chikay", pick: "Seattle over Texans ML (1.54)" },
     { picker: "@degencummunist.eth", pick: "Seattle over Texans ML (1.54)" },
     { picker: "@garrett", pick: "Seattle over Texans ML (1.54)" },
-		{ picker: "@matthew.eth", pick: "Seattle over Texans ML (1.54)" },
+    { picker: "@matthew.eth", pick: "Seattle over Texans ML (1.54)" },
   ],
 };
 
@@ -84,8 +84,8 @@ export default function App() {
                 startDate: event.date || new Date().toISOString(),
                 homeScore: homeTeam.score,
                 awayScore: awayTeam.score,
-                competitionName: event.name || "NFL Week 7",
-                description: competition.status?.type?.description || "",
+                competitionName: event.shortName || "NFL Week 7",
+                description: competition.status?.type?.shortDetail || "",
                 awayWinner:
                   competition.status?.type?.detail === "Final" &&
                   awayTeam.winner,
